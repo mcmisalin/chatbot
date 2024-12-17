@@ -1,0 +1,6 @@
+langchain
+streamlit
+langchain_core
+langchain_google_community
+langchain_google_vertexai
+langchain-google-community[vertexaisearch]
