@@ -81,7 +81,7 @@ Assistant:
 promptllm = PromptTemplate(template=template, input_variables=["chat_history","human_input"])
 
 llm = ChatVertexAI(
-    model="gemini-1.5-flash-002",
+    model="gemini-2.0-flash-exp",
     generation_config=generation_config,
     safety_settings=safety_settings
 )
