@@ -181,7 +181,7 @@ def LLM_init():
     llm_chain = LLMChain(
         prompt=promptllm, 
         llm=ChatVertexAI(
-            model="gemini-1.5-flash-002",
+            model="gemini-2.0-flash-exp",
             generation_config=generation_config,
             safety_settings=safety_settings), 
         memory=memory, 
