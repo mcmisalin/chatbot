@@ -32,17 +32,6 @@ button_html = """
         </button>
     </a>
 """
-
-def search_immigration_database(query: str) -> Union[str, Tuple[str, List[Any]]]:
-        """Search for visa information using VertexAI Search Retriever."""
-
-        retriever = VertexAISearchRetriever(
-            project_id=PROJECT_ID,
-            data_store_id=DATA_STORE_ID,
-            location_id=LOCATION_ID,
-            engine_data_type=0
-            )
-        return retriever.invoke(query)
     
     
 def generate_chat_history(messages):
@@ -76,12 +65,6 @@ def send_chat_via_post(chat_history, visa_type, llm, question_type):
         print(f"An error occurred: {e}")
         return None
     
-def sanitize_output(msg):
-    # List of unwanted phrases
-    unwanted_phrases = ["search_immigration_database"]
-    for phrase in unwanted_phrases:
-        msg = msg.replace(phrase, "")
-    return msg.strip()  
             
 memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
 
@@ -126,7 +109,7 @@ def LLM_init():
     llm_chain = LLMChain(
         prompt=promptllm, 
         llm=ChatVertexAI(
-            model="gemini-1.5-flash-002",
+            model="gemini-2.0-flash-exp",
             generation_config=generation_config,
             safety_settings=safety_settings), 
         memory=memory, 
@@ -196,14 +179,13 @@ if prompt := st.chat_input():
         llm_chain = LLM_init()
         chat_history = generate_chat_history(st.session_state["messages"])
 
-        msg2 = llm_chain.predict(human_input=prompt, chat_history=chat_history)
-        msg1 = sanitize_output(msg2)
+        msg = llm_chain.predict(human_input=prompt, chat_history=chat_history)
 
         # Append the assistant's response to the messages list
-        st.session_state["messages"].append({"role": "assistant", "content": msg1})
+        st.session_state["messages"].append({"role": "assistant", "content": msg})
 
         # Render the assistant's response in the chat
-        st.chat_message("assistant").write(msg1)
+        st.chat_message("assistant").write(msg)
 
-        memory.save_context({"input": prompt}, {"output": msg1})
+        memory.save_context({"input": prompt}, {"output": msg})
 
