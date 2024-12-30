@@ -189,21 +189,14 @@ if user_input:
                 st.session_state["messages"] = updated_messages
 
         # Now print the final assistant message once
-        # If assistant_content is empty, it means we never got a final AIMessage/Chunk
-        # In that case, we rely on the last assistant message from st.session_state["messages"]
         final_assistant_message = assistant_content.strip()
         if not final_assistant_message:
-            # Find the last assistant message
             for m in reversed(st.session_state["messages"]):
                 if m["role"] == "assistant":
                     final_assistant_message = m["content"]
                     break
 
-        # Print the final assistant answer once
-        # Remove any trailing initial prompts if they appear again
-        # If your intro message reappears, you can do a cleanup here:
         if "Hello, my name is ImmPath Chatbot" in final_assistant_message:
-            # Remove the intro part if it somehow got appended
             intro_index = final_assistant_message.rfind("Hello, my name is ImmPath Chatbot")
             if intro_index > 0:
                 # Keep only the text before intro re-appeared
