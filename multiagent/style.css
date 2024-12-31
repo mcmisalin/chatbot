@@ -6,3 +6,32 @@ html, body, [class*="css"] {
     font-weight: 500;
     color: #091747;
 }
+
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+.stDeployButton {
+        visibility: hidden;
+    }
+
+.stChatMessage > div:first-child {
+    display: none;
+}
+
+.block-container{
+    padding: 50px 18px 18px;
+}
+
+header{
+     visibility: hidden;
+     display: none;
+}
+
+h1{
+    text-align: left;
+    margin: 0px 0px 0px 18px;
+}
+
+.css-15zrgzn {display: none}
+.css-eczf16 {display: none}
+.css-jn99sy {display: none}
+

@@ -49,9 +49,6 @@ def generate_response(user_input):
         contents.append(types.Content(role=role, parts=[types.Part.from_text(message["text"])]))
 
 
-
-
-
     generate_content_config = types.GenerateContentConfig(
         temperature=1,
         top_p=0.95,

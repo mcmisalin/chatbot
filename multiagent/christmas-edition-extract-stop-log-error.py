@@ -26,11 +26,11 @@ generation_config = GenerationConfig(
     temperature=0.2, max_output_tokens=1024, top_k=40, top_p=0.8
 )
 
+
 def extract_visa_types_and_answers(chat_history: str) -> dict:
     """
     Provided snippet that calls the gemini model and parses JSON.
     """
-    # The 'prompt' snippet from your code. Keep a single large prompt referencing chat_history:
     prompt = """
     Task Overview:
     You are an agent that extracts visa types and answers from a chat history. 
@@ -93,30 +93,40 @@ if "messages" not in st.session_state:
 if "logs" not in st.session_state:
     st.session_state["logs"] = []  # store text from search results, links, etc.
 
-# Function to call Gemini 2.0 "flash-exp" with partial streaming
-def generate_response(user_input: str) -> str:
-    # Create the client
+# Function to generate responses from the Gemini model
+def generate_response(user_input):
     client = genai.Client(
         vertexai=True,
         project="vaulted-zodiac-253111",  # Replace with your project ID
-        location="us-central1"           # Replace with your location
+        location="us-central1"  # Replace with your preferred location
     )
 
-    # This system instruction is an example
-    system_instruction = """You are a US-based immigration expert AI Agent.
-    If user says 'stop' or 'done', do not continue. 
-    Provide next steps or keep conversation short. 
-    Searching the web for info as needed. 
+    system_instruction = """You are a US-based immigration expert AI Agent. Your goal is to find the right pathway for applicants to get visas in the US.
+    Use Google Search to establish the right set of questions to a user. Limit to 2 questions per turn of the chat.
+    Consider:
+    1) Time to get a visa
+    2) Path to residency and green card
+    3) Country of origin
+    4) cover big areas that are fast like Family, study and investment
+    5) Always ask if they live in the US currently and their status and if they have family in US that are permenent residents
+
+    Have a chat with the user, guiding them through questions to understand which visa they can apply for. Use Google Search throughout.
+    Summarize applicable visas. This will then get packaged and sent to a lawyer.
+    Even when you have a number of applicable visas, continue to look at 2-3 other options that may be applicable.
+    Give the user information in bite-sized pieces. Assume the applicant is not familiar with immigration processes. Don't overwhelm them with text or information.
+    Take the questions from the PDF inot consideration as you decide what visa that they are applicable for.
+    Summarize the viable options regularly throughout the chat.
+    IF an option is not clearly applicable discard it. 
+    Continue to explore viable options until the user has 5 viable visas.
+    After 6 questions and when you have a few viable visas, summarize again and guide the person to our full service offering at ImmigrationPathways.com
+    If the case seems to be getting complicated or the person is getting frustrated guide the to ImmigrationPathways.com.
     """
-
-    contents = []
-    # Add the conversation so far
-    for msg in st.session_state["messages"]:
-        role = "user" if msg["role"] == "user" else "model"
-        contents.append(types.Content(role=role, parts=[types.Part.from_text(msg["content"])]))
-
-    # Add the new user input
-    contents.append(types.Content(role="user", parts=[types.Part.from_text(user_input)]))
+    file_uri = "gs://immigration-pathways2/immigration-pathways/ELIGIBILITY_CRITERIA.pdf"
+    file_part = types.Part.from_uri(file_uri=file_uri, mime_type="application/pdf")
+    contents = [types.Content(role="user", parts=[types.Part.from_text(user_input), types.Part.from_uri(file_uri=file_uri, mime_type="application/pdf")])]
+    for message in st.session_state.messages:
+        role = "user" if message["is_user"] else "model"
+        contents.append(types.Content(role=role, parts=[types.Part.from_text(message["text"])]))
 
     generate_content_config = types.GenerateContentConfig(
         temperature=1,
@@ -129,7 +139,6 @@ def generate_response(user_input: str) -> str:
             types.SafetySetting(category="HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold="OFF"),
             types.SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="OFF")
         ],
-        # Tools are optional if you want google_search=...
         tools=[types.Tool(google_search=types.GoogleSearch())],
         system_instruction=[types.Part.from_text(system_instruction)],
     )
@@ -145,6 +154,12 @@ def generate_response(user_input: str) -> str:
         if chunk.candidates and chunk.candidates[0].content.parts:
             partial_text = chunk.text
             response_text += partial_text
+            # 3) Logging
+            # Store search results or relevant data:
+            st.session_state["logs"].append({
+                "event": "search",
+                "extracted_data": chunk.text
+            })
 
     return response_text
 
@@ -154,6 +169,10 @@ def generate_response(user_input: str) -> str:
 st.set_page_config(page_title="Gemini Immigration Chatbot with STOP + Extract")
 
 st.title("Gemini Immigration Chatbot with STOP & Extraction")
+
+# Insert new font
+with open("style.css") as css:
+    st.markdown(f'<style>{css.read()}</style>', unsafe_allow_html=True)
 
 # Show conversation
 for msg in st.session_state["messages"]:
@@ -186,16 +205,6 @@ if user_input:
             st.error(f"Error extracting data: {e}")
             extracted_data = {}
 
-        # 3) Logging
-        # e.g. store some logs in st.session_state["logs"]. 
-        # This is where you'd store search results or relevant data:
-        logs = ""
-        st.session_state["logs"].append({
-            "event": "extraction_done",
-            "extracted_data": extracted_data
-        })
-        logs = st.session_state["logs"]
-        st.json(logs)
 
         # 4) Provide next steps or redirect
         #   Option 1: Just display a link to the intake form:
