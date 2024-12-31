@@ -196,7 +196,6 @@ if user_input:
             full_chat += f"{m['role'].upper()}: {m['content']}\n"
 
         # Call extract agent
-        st.write("**Ending chat. Extracting your answers...**")
         try:
             extracted_data = extract_visa_types_and_answers(full_chat)
             st.write("**Extraction Results:**")
@@ -207,12 +206,10 @@ if user_input:
 
 
         # 4) Provide next steps or redirect
-        #   Option 1: Just display a link to the intake form:
+        #   Option 1: Just display a link to the intake form,
         intake_url = "https://www.immigrationpathways.com/intakeForm"
         st.markdown(f"**You can now fill out our intake form: [Start your application]({intake_url})**")
 
-        # Option 2: If you wanted to auto-redirect, 
-        # you might do something with st.experimental_rerun or st.stop
         # but this is the simplest approach:
         st.stop()
 
@@ -228,9 +225,6 @@ if user_input:
     st.session_state["messages"].append({"role": "assistant", "content": assistant_reply})
     with st.chat_message("assistant"):
         st.write(assistant_reply)
-
-    # Optionally store or parse any search result text if your code returns it.
-    # e.g. if partial search results are in the chunk, do st.session_state["logs"].append(...)
 
 
 # If user has typed nothing, do nothing
